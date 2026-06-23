@@ -1,20 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   completeUpload,
   createUploadRequest,
   generateDevToken,
+  getUploadedPhotos,
   uploadFileToS3,
 } from "@/lib/api";
+import { PhotoResponse } from "@/types/photo";
 
-const DEVELOPMENT_USER_ID = "demo-user-1212";
+const DEVELOPMENT_USER_ID = "demo-user-success";
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
+  const [photos, setPhotos] = useState<PhotoResponse[]>([]);
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+
+  const loadPhotos = async () => {
+    try {
+      const token = await generateDevToken(DEVELOPMENT_USER_ID);
+      const uploadedPhotos = await getUploadedPhotos(token);
+
+      setPhotos(uploadedPhotos);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    loadPhotos();
+  }, []
+  );
 
   const handleUpload = async () => {
     if (!file) {
@@ -47,6 +66,8 @@ export default function Home() {
 
       setStatus("Completing upload...");
       await completeUpload(uploadRequest.photoId, token);
+
+      await loadPhotos();
 
       setStatus("Upload successful!");
       setFile(null);
@@ -97,6 +118,25 @@ export default function Home() {
         </button>
 
         {status && <p className="mt-4 text-sm text-slate-300">{status}</p>}
+
+        <div className="mt-8">
+          <h2 className="mb-4 text-xl font-semibold">Uploaded Photos</h2>
+
+          {photos.length === 0 ? (
+            <p className="text-sm text-slate-400">No uploaded photos yet.</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              {photos.map((photo) => (
+                <img
+                  key={photo.photoId}
+                  src={photo.downloadUrl}
+                  alt="Uploaded photo"
+                  className="rounded-lg border border-slate-800"
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </section>
     </main>
   );

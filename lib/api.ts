@@ -1,4 +1,4 @@
-import type { CreateUploadRequest, CreateUploadResponse } from "@/types/photo";
+import type { CreateUploadRequest, CreateUploadResponse, PhotoResponse } from "@/types/photo";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
@@ -66,4 +66,20 @@ export async function completeUpload(
   if (!response.ok) {
     throw new Error("Failed to complete upload");
   }
+}
+
+export async function getUploadedPhotos(
+    token: string
+) :Promise<PhotoResponse> {
+    const response = await fetch(`${API_BASE_URL}/v1/photos`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to retrieve photos");
+    }
+
+    return response.json();
 }
