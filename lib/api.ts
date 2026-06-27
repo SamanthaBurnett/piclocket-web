@@ -54,7 +54,7 @@ export async function uploadFileToS3(
 
 export async function getUploadedPhotos(
     token: string
-) :Promise<PhotoResponse> {
+) :Promise<PhotoResponse[]> {
     const response = await fetch(`${API_BASE_URL}/v1/photos`, {
         headers: {
             Authorization: `Bearer ${token}`,
