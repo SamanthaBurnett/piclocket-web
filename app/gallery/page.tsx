@@ -2,8 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { generateDevToken, getUploadedPhotos } from "@/lib/api";
+import {
+  deletePhoto,
+  generateDevToken,
+  getUploadedPhotos,
+} from "@/lib/api";
 import { PhotoResponse } from "@/types/photo";
+import { Trash2 } from "lucide-react";
 
 const DEVELOPMENT_USER_ID = "demo-user-success";
 
@@ -29,6 +34,21 @@ export default function GalleryPage() {
       setIsLoading(false);
     }
   };
+
+  const handleDelete = async (photoId: string) => {
+  try {
+    const token = await generateDevToken(DEVELOPMENT_USER_ID);
+
+    await deletePhoto(photoId, token);
+
+    setPhotos((currentPhotos) =>
+      currentPhotos.filter((photo) => photo.photoId !== photoId)
+    );
+  } catch (error) {
+    console.error(error);
+    setStatus("Failed to delete photo.");
+  }
+};
 
   useEffect(() => {
     loadPhotos();
@@ -74,12 +94,23 @@ export default function GalleryPage() {
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
             {photos.map((photo) => (
-              <img
-                key={photo.photoId}
-                src={photo.downloadUrl}
-                alt="Uploaded photo"
-                className="aspect-square rounded-lg border border-slate-800 object-cover"
-              />
+                <div>
+                    <img
+                        key={photo.photoId}
+                        src={photo.downloadUrl}
+                        alt="Uploaded photo"
+                        className="aspect-square rounded-lg border border-slate-800 object-cover"
+                    />
+
+                    <button
+                        type="button"
+                        onClick={() => handleDelete(photo.photoId)}
+                        aria-label="Delete Photo"
+                        className="absolute right-2 top-2 rounded-full bg-slate-900/80 p-2 text-red-400 transition hover:bg-slate-800 hover:text-red-300"
+                    >
+                        <Trash2 size={18} />
+                    </button>
+                </div>
             ))}
           </div>
         )}
