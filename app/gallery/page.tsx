@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { generateDevToken, getUploadedPhotos } from "@/lib/api";
 import { PhotoResponse } from "@/types/photo";
 
-const DEVELOPMENT_USER_ID = "demo-user-success-1";
+const DEVELOPMENT_USER_ID = "demo-user-success";
 
 export default function GalleryPage() {
   const [photos, setPhotos] = useState<PhotoResponse[]>([]);
