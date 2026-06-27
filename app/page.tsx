@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useState } from "react";
+
 import {
   createUploadRequest,
   generateDevToken,
-  getUploadedPhotos,
   uploadFileToS3,
 } from "@/lib/api";
-import { PhotoResponse } from "@/types/photo";
 
 const DEVELOPMENT_USER_ID = "demo-user-success";
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
@@ -19,25 +19,8 @@ const sleep = (ms: number) =>
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
-  const [photos, setPhotos] = useState<PhotoResponse[]>([]);
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
-
-  // Loads photos that the backend has already marked as UPLOADED.
-  const loadPhotos = async () => {
-    try {
-      const token = await generateDevToken(DEVELOPMENT_USER_ID);
-      const uploadedPhotos = await getUploadedPhotos(token);
-
-      setPhotos(uploadedPhotos);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  useEffect(() => {
-    loadPhotos();
-  }, []);
 
   const handleUpload = async () => {
     if (!file) {
@@ -52,6 +35,7 @@ export default function Home() {
 
     try {
       setIsUploading(true);
+
       setStatus("Generating upload URL...");
 
       const token = await generateDevToken(DEVELOPMENT_USER_ID);
@@ -70,13 +54,12 @@ export default function Home() {
       setStatus("Uploading file to S3...");
       await uploadFileToS3(uploadRequest.uploadUrl, file);
 
-      // Backend completion is now event-driven:
+      // Backend completion is event-driven:
       // S3 -> SQS -> listener -> DB status update.
-      setStatus("Upload received. Waiting for processing...");
+      setStatus("Upload received. Processing shortly...");
       await sleep(2000);
-      await loadPhotos();
 
-      setStatus("Upload successful!");
+      setStatus("Upload successful! View it in the gallery.");
       setFile(null);
     } catch (error) {
       console.error(error);
@@ -111,39 +94,28 @@ export default function Home() {
           <div className="mb-4 rounded-lg bg-slate-800 p-3 text-sm text-slate-300">
             <p>Name: {file.name}</p>
             <p>Type: {file.type || "unknown"}</p>
-            <p>Size: {(file.size / 1024).toFixed(2)} KB</p>
           </div>
         )}
 
-        <button
-          type="button"
-          onClick={handleUpload}
-          disabled={!file || isUploading}
-          className="rounded-lg bg-cyan-400 px-4 py-2 font-semibold text-slate-950 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isUploading ? "Uploading..." : "Upload"}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleUpload}
+            disabled={!file || isUploading}
+            className="rounded-lg bg-cyan-400 px-4 py-2 font-semibold text-slate-950 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isUploading ? "Uploading..." : "Upload"}
+          </button>
+
+          <Link
+            href="/gallery"
+            className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800"
+          >
+            View gallery
+          </Link>
+        </div>
 
         {status && <p className="mt-4 text-sm text-slate-300">{status}</p>}
-
-        <div className="mt-8">
-          <h2 className="mb-4 text-xl font-semibold">Uploaded Photos</h2>
-
-          {photos.length === 0 ? (
-            <p className="text-sm text-slate-400">No uploaded photos yet.</p>
-          ) : (
-            <div className="grid grid-cols-2 gap-4">
-              {photos.map((photo) => (
-                <img
-                  key={photo.photoId}
-                  src={photo.downloadUrl}
-                  alt="Uploaded photo"
-                  className="rounded-lg border border-slate-800"
-                />
-              ))}
-            </div>
-          )}
-        </div>
       </section>
     </main>
   );
