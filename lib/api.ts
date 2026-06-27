@@ -52,22 +52,6 @@ export async function uploadFileToS3(
   }
 }
 
-export async function completeUpload(
-  photoId: string,
-  token: string
-): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/v1/photos/${photoId}/complete`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to complete upload");
-  }
-}
-
 export async function getUploadedPhotos(
     token: string
 ) :Promise<PhotoResponse> {

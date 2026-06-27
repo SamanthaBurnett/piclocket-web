@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
-  completeUpload,
   createUploadRequest,
   generateDevToken,
   getUploadedPhotos,
@@ -13,12 +12,18 @@ import { PhotoResponse } from "@/types/photo";
 const DEVELOPMENT_USER_ID = "demo-user-success";
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
+// Temporary helper for the async S3 -> SQS -> listener flow.
+// Later, we can replace this with polling or a status endpoint.
+const sleep = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [photos, setPhotos] = useState<PhotoResponse[]>([]);
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
+  // Loads photos that the backend has already marked as UPLOADED.
   const loadPhotos = async () => {
     try {
       const token = await generateDevToken(DEVELOPMENT_USER_ID);
@@ -32,8 +37,7 @@ export default function Home() {
 
   useEffect(() => {
     loadPhotos();
-  }, []
-  );
+  }, []);
 
   const handleUpload = async () => {
     if (!file) {
@@ -52,6 +56,7 @@ export default function Home() {
 
       const token = await generateDevToken(DEVELOPMENT_USER_ID);
 
+      // Backend creates metadata row and returns a presigned S3 PUT URL.
       const uploadRequest = await createUploadRequest(
         {
           filename: file.name,
@@ -61,12 +66,14 @@ export default function Home() {
         token
       );
 
+      // Browser uploads directly to S3.
       setStatus("Uploading file to S3...");
       await uploadFileToS3(uploadRequest.uploadUrl, file);
 
-      setStatus("Completing upload...");
-      await completeUpload(uploadRequest.photoId, token);
-
+      // Backend completion is now event-driven:
+      // S3 -> SQS -> listener -> DB status update.
+      setStatus("Upload received. Waiting for processing...");
+      await sleep(2000);
       await loadPhotos();
 
       setStatus("Upload successful!");
