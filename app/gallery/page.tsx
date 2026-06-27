@@ -94,19 +94,18 @@ export default function GalleryPage() {
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
             {photos.map((photo) => (
-                <div>
+                <div key={photo.photoId} className="group relative overflow-hidden rounded-lg border border-slate-800">
                     <img
-                        key={photo.photoId}
                         src={photo.downloadUrl}
                         alt="Uploaded photo"
-                        className="aspect-square rounded-lg border border-slate-800 object-cover"
+                        className="aspect-square w-full object-cover"
                     />
 
                     <button
                         type="button"
                         onClick={() => handleDelete(photo.photoId)}
                         aria-label="Delete Photo"
-                        className="absolute right-2 top-2 rounded-full bg-slate-900/80 p-2 text-red-400 transition hover:bg-slate-800 hover:text-red-300"
+                        className="absolute right-2 top-2 rounded-full bg-slate-950/80 p-2 text-red-400 transition hover:bg-slate-800 hover:text-white"
                     >
                         <Trash2 size={18} />
                     </button>
