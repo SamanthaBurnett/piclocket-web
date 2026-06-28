@@ -105,7 +105,7 @@ export default function GalleryPage() {
                         type="button"
                         onClick={() => handleDelete(photo.photoId)}
                         aria-label="Delete Photo"
-                        className="absolute right-2 top-2 rounded-full bg-slate-950/80 p-2 text-red-400 transition hover:bg-slate-800 hover:text-white"
+                        className="absolute bottom-2 right-2 rounded-full bg-slate-950/80 p-2 text-red-400 transition hover:bg-slate-800 hover:text-white"
                     >
                         <Trash2 size={18} />
                     </button>
